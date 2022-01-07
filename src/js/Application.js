@@ -2,6 +2,7 @@ import EventEmitter from "eventemitter3";
 import image from "../images/planet.svg";
 
 export default class Application extends EventEmitter {
+  
   static get events() {
     return {
       READY: "ready",
@@ -10,16 +11,13 @@ export default class Application extends EventEmitter {
 
   constructor() {
     super();
-
-    const box = document.createElement("div");
-    box.classList.add("box");
-    box.innerHTML = this._render({
-      name: "Placeholder",
-      terrain: "placeholder",
-      population: 0,
-    });
-
-    document.body.querySelector(".main").appendChild(box);
+    let initialUrl = "https://swapi.boom.dev/api/planets";
+    let _loading  = document.querySelector(" .progress");
+    this._startLoading(_loading);
+    console.log("Loading:");
+    this._load(initialUrl);
+    console.log("Stoppping loading:");
+    this._stopLoading(_loading);
 
     this.emit(Application.events.READY);
   }
@@ -44,4 +42,36 @@ export default class Application extends EventEmitter {
 </article>
     `;
   }
+async _load(initialUrl){
+  let url = initialUrl;
+  while(url != null){   
+    const response = await fetch(url);
+    const objectResponse = await response.json();
+    let planets = objectResponse.results.map(result => {return {name: result.name, terrain: result.terrain, population: result.population};});
+    console.log(planets);
+    url = objectResponse.next;
+    console.log(url);
+    for(let i = 0; i< planets.length;i++){
+      this._create(planets[i]);
+    }
+  }
+}
+
+_create(planet){
+  const box = document.createElement("div");
+    box.classList.add("box");
+    box.innerHTML = this._render({
+      name: planet.name,
+      terrain: planet.terrain,
+      population: planet.population,
+    });
+
+    document.body.querySelector(".main").appendChild(box);
+}
+_startLoading(_loading){
+_loading.style.visibility = "visible";
+}
+_stopLoading(_loading){
+_loading.style.visibility = "hidden";
+}
 }
